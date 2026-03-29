@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System rzymski</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --dark: #313340;
+      --blue: #2E56A6;
+      --light-blue: #4A96D9;
+      --peach: #E9EBF2;
+      --white: #ffffff;
+      --text: #222;
+      --shadow: 0 6px 14px rgba(49, 51, 64, 0.18);
+      --shadow-soft: 0 3px 8px rgba(49, 51, 64, 0.12);
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: var(--peach);
+      color: var(--text);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    .page {
+      height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      height: 10px;
+      background: var(--peach);
+      border-bottom: 2px solid rgba(49, 51, 64, 0.08);
+      flex-shrink: 0;
+    }
+
+    .header {
+      background: rgba(217, 210, 231, 0.9);
+      text-align: center;
+      padding: 5px 10px 6px;
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 56px);
+      line-height: 1;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: 1px;
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+    }
+
+    .content {
+      flex: 1;
+      min-height: 0;
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .control-block {
+      width: 320px;
+      max-width: 100%;
+    }
+
+    .mode-button {
+      width: 100%;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      min-height: 46px;
+      font-size: clamp(18px, 2vw, 24px);
+      font-weight: bold;
+      color: #fff8f0;
+      background: var(--blue);
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      white-space: nowrap;
+      line-height: 1;
+      text-transform: lowercase;
+      touch-action: manipulation;
+    }
+
+    .mode-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .mode-button.active {
+      background: var(--light-blue);
+      box-shadow: 0 0 0 4px rgba(46, 86, 166, 0.18), var(--shadow);
+    }
+
+    .mode-input-shell {
+      margin-top: 8px;
+      width: 100%;
+      background: var(--dark);
+      border-radius: 20px;
+      padding: 6px 8px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .mode-input {
+      width: 100%;
+      height: 40px;
+      border: none;
+      outline: none;
+      border-radius: 14px;
+      background: rgba(217, 210, 231, 0.95);
+      text-align: center;
+      font-size: clamp(18px, 2vw, 24px);
+      color: var(--dark);
+      padding: 0 10px;
+      font-weight: bold;
+    }
+
+    .mode-input.inactive {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .layout {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(420px, 1.2fr) minmax(320px, 1fr);
+      gap: 16px;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    .left-side,
+    .right-side {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .board-panel {
+      background: rgba(217, 210, 231, 0.9);
+      border-radius: 18px;
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .board-title {
+      margin: 0;
+      font-size: clamp(22px, 2.2vw, 32px);
+      line-height: 1.05;
+      text-transform: uppercase;
+      color: #111;
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .board-subtitle {
+      margin: 4px 0 10px;
+      text-align: center;
+      font-size: clamp(16px, 1.8vw, 22px);
+      line-height: 1.1;
+      color: #111;
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      flex-shrink: 0;
+    }
+
+    .board {
+      flex: 1;
+      min-height: 0;
+      border-radius: 24px;
+      background: #e7e7e7;
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: flex-start;
+      overflow: hidden;
+    }
+
+    .board-empty {
+      color: #777;
+      font-size: clamp(16px, 1.8vw, 22px);
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      width: 100%;
+      text-align: center;
+      margin-top: 8px;
+    }
+
+    .board-piece {
+      min-width: 62px;
+      height: 62px;
+      padding: 0 8px;
+      border-radius: 18px;
+      background: var(--white);
+      border: 4px solid var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: clamp(18px, 1.8vw, 22px);
+      font-weight: bold;
+      color: var(--dark);
+      cursor: pointer;
+      user-select: none;
+      font-family: Arial, sans-serif;
+      box-shadow: var(--shadow-soft);
+      touch-action: manipulation;
+    }
+
+    .board-piece .remove-x {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 12px;
+      color: var(--dark);
+      opacity: 0.7;
+    }
+
+    .board-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .action-button {
+      min-width: 140px;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 16px;
+      font-size: clamp(18px, 1.8vw, 22px);
+      font-weight: bold;
+      cursor: pointer;
+      color: #fff6f2;
+      background: var(--blue);
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      box-shadow: var(--shadow);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .action-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .action-button.secondary {
+      background: var(--dark);
+    }
+
+    .board-result {
+      margin-top: 10px;
+      min-height: 46px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.6);
+      font-size: clamp(16px, 1.8vw, 22px);
+      font-weight: bold;
+      color: var(--dark);
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      flex-shrink: 0;
+    }
+
+    .board-result.success {
+      background: #d7f5df;
+      color: #0a6d34;
+    }
+
+    .board-result.error {
+      background: #ffe1de;
+      color: #a12119;
+    }
+
+    .columns-wrap {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .column {
+      background: rgba(217, 210, 231, 0.92);
+      border-radius: 18px;
+      padding: 6px 4px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .column-label {
+      border-radius: 16px;
+      color: white;
+      font-size: clamp(13px, 1.2vw, 14px);
+      font-weight: bold;
+      padding: 6px 8px;
+      min-width: 70px;
+      text-align: center;
+      margin-bottom: 6px;
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      box-shadow: var(--shadow-soft);
+      flex-shrink: 0;
+      line-height: 1.1;
+    }
+
+    .thousands-label { background: #09934f; }
+    .hundreds-label { background: #ff332c; }
+    .tens-label { background: #2f2bbf; }
+    .ones-label { background: #0bbd62; }
+
+    .tiles {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      width: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .tile {
+      width: 54px;
+      height: 38px;
+      perspective: 900px;
+      cursor: grab;
+      user-select: none;
+      touch-action: manipulation;
+      flex-shrink: 0;
+    }
+
+    .tile.no-transition .tile-inner {
+      transition: none !important;
+    }
+
+    .tile-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s ease;
+    }
+
+    .tile.flipped .tile-inner {
+      transform: rotateY(180deg);
+    }
+
+    .tile-face {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      background: var(--white);
+      border: 3px solid var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--dark);
+      font-weight: bold;
+      font-size: 12px;
+      text-align: center;
+      padding: 2px;
+      font-family: Arial, sans-serif;
+      backface-visibility: hidden;
+      box-shadow: var(--shadow-soft);
+      line-height: 1;
+    }
+
+    .tile-back {
+      transform: rotateY(180deg);
+      background: #f7fbff;
+      border-color: var(--light-blue);
+    }
+
+    .legend {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      color: var(--dark);
+      font-family: "Comic Sans MS", "Trebuchet MS", cursive, sans-serif;
+      font-size: clamp(14px, 1.2vw, 17px);
+      flex-shrink: 0;
+    }
+
+    .legend-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.55);
+      padding: 6px 10px;
+      border-radius: 14px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--light-blue);
+    }
+
+    .tile,
+    .board-piece,
+    .mode-button,
+    .action-button {
+      touch-action: manipulation;
+    }
+
+    @media (max-width: 1100px) {
+      html, body {
+        overflow: auto;
+      }
+
+      .page {
+        height: auto;
+        min-height: 100vh;
+      }
+
+      .content {
+        overflow: visible;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        min-height: auto;
+      }
+
+      .left-side,
+      .right-side,
+      .board-panel,
+      .columns-wrap,
+      .column {
+        overflow: visible;
+        height: auto;
+      }
+
+      .columns-wrap {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .board {
+        min-height: 240px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .header h1 {
+        font-size: 42px;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .control-block {
+        width: 100%;
+      }
+
+      .columns-wrap {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .tile {
+        width: 58px;
+        height: 40px;
+      }
+
+      .mode-button,
+      .action-button {
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      html, body {
+        overflow: auto;
+      }
+
+      .page {
+        height: auto;
+      }
+
+      .columns-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="top-bar"></div>
+
+    <div class="header">
+      <h1>System rzymski</h1>
+    </div>
+
+    <div class="content">
+      <div class="controls">
+        <div class="control-block">
+          <button id="romanModeBtn" class="mode-button active" type="button">liczba rzymska</button>
+          <div class="mode-input-shell">
+            <input id="romanTargetInput" class="mode-input" type="text" placeholder="np. XLIV" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="control-block">
+          <button id="arabicModeBtn" class="mode-button" type="button">liczba arabska</button>
+          <div class="mode-input-shell">
+            <input id="arabicTargetInput" class="mode-input inactive" type="number" placeholder="np. 44" min="1" max="3999" autocomplete="off">
+          </div>
+        </div>
+      </div>
+
+      <div class="layout">
+        <div class="left-side">
+          <div class="board-panel">
+            <h2 class="board-title">TABLICA DO UKŁADANIA</h2>
+            <div class="board-subtitle">Rozszyfruj liczbę upuszczając odpowiednie kafelki.</div>
+
+            <div id="board" class="board">
+              <div id="boardEmpty" class="board-empty">Dotknij lub przeciągnij kafelki z kolumn.</div>
+            </div>
+
+            <div class="board-actions">
+              <button class="action-button secondary" type="button" id="clearBtn">Wyczyść</button>
+              <button class="action-button" type="button" id="checkBtn">Sprawdź</button>
+            </div>
+
+            <div id="boardResult" class="board-result"></div>
+          </div>
+
+          <div class="legend">
+            <div class="legend-chip">
+              <span class="legend-dot"></span>
+              aktywny tryb zmienia napisy na kafelkach
+            </div>
+          </div>
+        </div>
+
+        <div class="right-side">
+          <div class="columns-wrap">
+            <div class="column">
+              <div class="column-label thousands-label">tysiące</div>
+              <div id="thousands" class="tiles"></div>
+            </div>
+
+            <div class="column">
+              <div class="column-label hundreds-label">setki</div>
+              <div id="hundreds" class="tiles"></div>
+            </div>
+
+            <div class="column">
+              <div class="column-label tens-label">dziesiątki</div>
+              <div id="tens" class="tiles"></div>
+            </div>
+
+            <div class="column">
+              <div class="column-label ones-label">jedności</div>
+              <div id="ones" class="tiles"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tileData = {
+      thousands: [
+        { roman: "M", arabic: "1000" },
+        { roman: "MM", arabic: "2000" },
+        { roman: "MMM", arabic: "3000" }
+      ],
+      hundreds: [
+        { roman: "C", arabic: "100" },
+        { roman: "CC", arabic: "200" },
+        { roman: "CCC", arabic: "300" },
+        { roman: "CD", arabic: "400" },
+        { roman: "D", arabic: "500" },
+        { roman: "DC", arabic: "600" },
+        { roman: "DCC", arabic: "700" },
+        { roman: "DCCC", arabic: "800" },
+        { roman: "CM", arabic: "900" }
+      ],
+      tens: [
+        { roman: "X", arabic: "10" },
+        { roman: "XX", arabic: "20" },
+        { roman: "XXX", arabic: "30" },
+        { roman: "XL", arabic: "40" },
+        { roman: "L", arabic: "50" },
+        { roman: "LX", arabic: "60" },
+        { roman: "LXX", arabic: "70" },
+        { roman: "LXXX", arabic: "80" },
+        { roman: "XC", arabic: "90" }
+      ],
+      ones: [
+        { roman: "I", arabic: "1" },
+        { roman: "II", arabic: "2" },
+        { roman: "III", arabic: "3" },
+        { roman: "IV", arabic: "4" },
+        { roman: "V", arabic: "5" },
+        { roman: "VI", arabic: "6" },
+        { roman: "VII", arabic: "7" },
+        { roman: "VIII", arabic: "8" },
+        { roman: "IX", arabic: "9" }
+      ]
+    };
+
+    const board = document.getElementById("board");
+    const boardEmpty = document.getElementById("boardEmpty");
+    const boardResult = document.getElementById("boardResult");
+
+    const romanModeBtn = document.getElementById("romanModeBtn");
+    const arabicModeBtn = document.getElementById("arabicModeBtn");
+    const romanTargetInput = document.getElementById("romanTargetInput");
+    const arabicTargetInput = document.getElementById("arabicTargetInput");
+
+    const clearBtn = document.getElementById("clearBtn");
+    const checkBtn = document.getElementById("checkBtn");
+
+    let currentMode = "roman";
+    let draggedTile = null;
+
+    function romanToArabic(roman) {
+      const values = { I:1, V:5, X:10, L:50, C:100, D:500, M:1000 };
+      let total = 0;
+
+      for (let i = 0; i < roman.length; i++) {
+        const current = values[roman[i]];
+        const next = values[roman[i + 1]];
+        if (!current) return null;
+        if (next && current < next) total -= current;
+        else total += current;
+      }
+
+      return total;
+    }
+
+    function arabicToRoman(number) {
+      const map = [
+        { value: 1000, numeral: "M" },
+        { value: 900, numeral: "CM" },
+        { value: 500, numeral: "D" },
+        { value: 400, numeral: "CD" },
+        { value: 100, numeral: "C" },
+        { value: 90, numeral: "XC" },
+        { value: 50, numeral: "L" },
+        { value: 40, numeral: "XL" },
+        { value: 10, numeral: "X" },
+        { value: 9, numeral: "IX" },
+        { value: 5, numeral: "V" },
+        { value: 4, numeral: "IV" },
+        { value: 1, numeral: "I" }
+      ];
+
+      let result = "";
+      let rest = number;
+
+      for (let i = 0; i < map.length; i++) {
+        while (rest >= map[i].value) {
+          result += map[i].numeral;
+          rest -= map[i].value;
+        }
+      }
+
+      return result;
+    }
+
+    function validateRoman(roman) {
+      if (!roman || !/^[IVXLCDM]+$/.test(roman)) return null;
+      const arabic = romanToArabic(roman);
+      if (!arabic || arabic < 1 || arabic > 3999) return null;
+      return arabicToRoman(arabic) === roman ? arabic : null;
+    }
+
+    function createTile(item) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.dataset.roman = item.roman;
+      tile.dataset.arabic = item.arabic;
+      tile.setAttribute("draggable", "true");
+
+      tile.innerHTML = `
+        <div class="tile-inner">
+          <div class="tile-face tile-front"></div>
+          <div class="tile-face tile-back"></div>
+        </div>
+      `;
+
+      tile.addEventListener("dragstart", () => {
+        draggedTile = {
+          roman: item.roman,
+          arabic: item.arabic
+        };
+      });
+
+      tile.addEventListener("click", () => {
+        addBoardPiece({
+          roman: item.roman,
+          arabic: item.arabic
+        });
+      });
+
+      tile.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        addBoardPiece({
+          roman: item.roman,
+          arabic: item.arabic
+        });
+      }, { passive: false });
+
+      return tile;
+    }
+
+    function loadTiles() {
+      Object.keys(tileData).forEach(key => {
+        const container = document.getElementById(key);
+        container.innerHTML = "";
+        tileData[key].forEach(item => {
+          container.appendChild(createTile(item));
+        });
+      });
+      updateTilesView(false);
+    }
+
+    function updateTilesView(withAnimation = false) {
+      document.querySelectorAll(".tile").forEach(tile => {
+        const item = {
+          roman: tile.dataset.roman,
+          arabic: tile.dataset.arabic
+        };
+
+        const front = tile.querySelector(".tile-front");
+        const back = tile.querySelector(".tile-back");
+
+        front.textContent = item.roman;
+        back.textContent = item.arabic;
+
+        if (withAnimation) {
+          if (currentMode === "roman") tile.classList.add("flipped");
+          else tile.classList.remove("flipped");
+        } else {
+          tile.classList.add("no-transition");
+          if (currentMode === "roman") tile.classList.add("flipped");
+          else tile.classList.remove("flipped");
+          void tile.offsetWidth;
+          tile.classList.remove("no-transition");
+        }
+      });
+
+      document.querySelectorAll(".board-piece").forEach(piece => {
+        piece.querySelector(".piece-label").textContent =
+          currentMode === "roman" ? piece.dataset.arabic : piece.dataset.roman;
+      });
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+
+      if (mode === "roman") {
+        romanModeBtn.classList.add("active");
+        arabicModeBtn.classList.remove("active");
+        romanTargetInput.classList.remove("inactive");
+        arabicTargetInput.classList.add("inactive");
+      } else {
+        arabicModeBtn.classList.add("active");
+        romanModeBtn.classList.remove("active");
+        arabicTargetInput.classList.remove("inactive");
+        romanTargetInput.classList.add("inactive");
+      }
+
+      updateTilesView(true);
+      boardResult.textContent = "";
+      boardResult.className = "board-result";
+    }
+
+    romanModeBtn.addEventListener("click", () => setMode("roman"));
+    arabicModeBtn.addEventListener("click", () => setMode("arabic"));
+
+    board.addEventListener("dragover", e => {
+      e.preventDefault();
+    });
+
+    board.addEventListener("drop", e => {
+      e.preventDefault();
+      if (!draggedTile) return;
+      addBoardPiece(draggedTile);
+      draggedTile = null;
+    });
+
+    function addBoardPiece(item) {
+      const piece = document.createElement("div");
+      piece.className = "board-piece";
+      piece.dataset.roman = item.roman;
+      piece.dataset.arabic = item.arabic;
+
+      const label = document.createElement("span");
+      label.className = "piece-label";
+      label.textContent = currentMode === "roman" ? item.arabic : item.roman;
+
+      const remove = document.createElement("span");
+      remove.className = "remove-x";
+      remove.textContent = "×";
+
+      piece.appendChild(label);
+      piece.appendChild(remove);
+
+      piece.addEventListener("click", () => {
+        piece.remove();
+        updateBoardState();
+      });
+
+      piece.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        piece.remove();
+        updateBoardState();
+      }, { passive: false });
+
+      board.appendChild(piece);
+      updateBoardState();
+    }
+
+    function updateBoardState() {
+      const pieces = board.querySelectorAll(".board-piece");
+      boardEmpty.style.display = pieces.length ? "none" : "block";
+    }
+
+    function clearBoard() {
+      board.querySelectorAll(".board-piece").forEach(piece => piece.remove());
+      updateBoardState();
+      boardResult.textContent = "";
+      boardResult.className = "board-result";
+    }
+
+    clearBtn.addEventListener("click", clearBoard);
+
+    function getBuiltRoman() {
+      return [...board.querySelectorAll(".board-piece")]
+        .map(piece => piece.dataset.roman)
+        .join("");
+    }
+
+    function checkBoard() {
+      const builtRoman = getBuiltRoman();
+
+      if (!builtRoman) {
+        boardResult.textContent = "Najpierw ułóż liczbę na tablicy.";
+        boardResult.className = "board-result error";
+        return;
+      }
+
+      const builtArabic = validateRoman(builtRoman);
+
+      if (builtArabic === null) {
+        boardResult.textContent = "Ułożona liczba rzymska nie jest poprawna.";
+        boardResult.className = "board-result error";
+        return;
+      }
+
+      if (currentMode === "roman") {
+        const targetRoman = romanTargetInput.value.trim().toUpperCase();
+        romanTargetInput.value = targetRoman;
+
+        if (!targetRoman) {
+          boardResult.textContent = "Wpisz liczbę rzymską do sprawdzenia.";
+          boardResult.className = "board-result error";
+          return;
+        }
+
+        const validTargetArabic = validateRoman(targetRoman);
+        if (validTargetArabic === null) {
+          boardResult.textContent = "Wpisana liczba rzymska nie jest poprawna.";
+          boardResult.className = "board-result error";
+          return;
+        }
+
+        if (builtRoman === targetRoman) {
+          boardResult.textContent = "Brawo! Ułożona liczba zgadza się z wpisaną: " + builtRoman;
+          boardResult.className = "board-result success";
+        } else {
+          boardResult.textContent = "To jeszcze nie to. Ułożono: " + builtRoman + ", a wpisano: " + targetRoman;
+          boardResult.className = "board-result error";
+        }
+      } else {
+        const raw = arabicTargetInput.value.trim();
+
+        if (!raw) {
+          boardResult.textContent = "Wpisz liczbę arabską do sprawdzenia.";
+          boardResult.className = "board-result error";
+          return;
+        }
+
+        const targetArabic = Number(raw);
+        if (!Number.isInteger(targetArabic) || targetArabic < 1 || targetArabic > 3999) {
+          boardResult.textContent = "Wpisz liczbę całkowitą od 1 do 3999.";
+          boardResult.className = "board-result error";
+          return;
+        }
+
+        if (builtArabic === targetArabic) {
+          boardResult.textContent = "Brawo! Ułożona liczba zgadza się z wpisaną: " + builtArabic;
+          boardResult.className = "board-result success";
+        } else {
+          boardResult.textContent = "To jeszcze nie to. Ułożono: " + builtArabic + ", a wpisano: " + targetArabic;
+          boardResult.className = "board-result error";
+        }
+      }
+    }
+
+    checkBtn.addEventListener("click", checkBoard);
+
+    loadTiles();
+    setMode("roman");
+    updateBoardState();
+  </script>
+</body>
+</html>
